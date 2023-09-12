@@ -27,7 +27,7 @@ module reset
 module_load  blink_test_data/devel blink_astroio/master 
 
 # cmake is only required at build time, so we use the normal module load
-module load cmake/3.21.4
+module load cmake/3.24.3
 # build your software..
 echo "Building the software.."
 
