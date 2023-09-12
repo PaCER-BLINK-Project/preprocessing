@@ -4,8 +4,7 @@
 #include <unordered_map>
 
 template <>
-Visibilities<float> reorder_visibilities(const Visibilities<float>& vis, const std::vector<int>& mapping);
-
+Visibilities<float> reorder_visibilities(const Visibilities<float>& vis, const antenna_mapping_t& mapping);
 
 std::vector<int> get_pfb_mapping(){
     int single_pfb_output_to_input[64] {0, 16, 32, 48};
