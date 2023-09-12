@@ -16,7 +16,7 @@ void test_pfb_mapping(){
 
 
 void test_visibilities_mapping(){
-    const std::string metadata_file {data_root_dir + "/mwa/1103645160/20200619163000.metafits"}; 
+    const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
 	auto mapping = get_visibilities_mapping(metadata_file);
     int ant, pol;
     std::tie(ant, pol) = mapping[{1, 0}];
@@ -26,11 +26,26 @@ void test_visibilities_mapping(){
 }
 
 void test_reordering(){
-	const std::string metadata_file {data_root_dir + "/mwa/1103645160/20200619163000.metafits"}; 
+	const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
+	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
+    auto vis = Visibilities<float>::from_fits_file(vis_file);
+    auto mapping = get_visibilities_mapping(metadata_file);
+	auto reord_vis = reorder_visibilities(vis, mapping);
 	
-	//auto reord_vis = reorder_visibilities(vis, meta);
-	
-	throw TestFailed("'test_reordering': Implement me.");
+    const float expected_values[] {342.5, -416.25, -346., 840., -308.5, 507., 292., 220.75};
+    const int n_baselines = 128 / 2 * 129;
+    const int matrix_size = n_baselines * 4 * 2;
+    const int baseline_idx = 1;
+    const int channel = 1;
+    const float* computed_values {
+        reinterpret_cast<float*>(reord_vis.data) + channel * matrix_size + baseline_idx * 8 
+    };
+    for(int i {0}; i < 8; i++){
+        if(std::abs(expected_values[i] - computed_values[i]) > 1e-4){
+            std::cerr << "expected_value[i] = " << expected_values[i] << ", computed_value[i] = " << computed_values[i] << std::endl;
+            throw TestFailed("'test_reordering': values are different.");
+        }
+    }
     std::cout << "'test_reordering' passed." << std::endl;
 }
 
