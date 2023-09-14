@@ -16,7 +16,7 @@ PROGRAM_VERSION=master #${COMMIT_HASH:0:7}
 # - "group": install the software in the group wide directory
 # - "user": install the software only for the current user
 # - "test": install the software in the current working directory 
-process_build_script_input user
+process_build_script_input group # user
 
 
 # load all the modules required for the program to compile and run.
@@ -38,10 +38,10 @@ make VERBOSE=1
 
 # Install the software
 make test
-# make install
+make install
 
 
 echo "Creating the modulefile.."
-# create_modulefile
+create_modulefile
 
 echo "Done."

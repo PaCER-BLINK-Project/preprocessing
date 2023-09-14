@@ -58,7 +58,7 @@ Visibilities<T> reorder_visibilities(const Visibilities<T>& vis, const antenna_m
 
                         const int dest1_idx {dest_a1 * 2 + dest_p1};
                         const int dest2_idx {dest_a2 * 2 + dest_p2};
-                        bool to_conjugate = !(source1_idx < source2_idx && dest1_idx < dest2_idx);
+                        bool to_conjugate = !((source1_idx < source2_idx && dest1_idx < dest2_idx) || (source1_idx > source2_idx && dest1_idx > dest2_idx));
 
                         const int src_idx { ch * matrix_size + src_baseline * 8 +  src_pol1 * 4 + src_pol2 * 2};
                         int new_baseline;
