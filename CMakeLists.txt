@@ -29,3 +29,7 @@ install(TARGETS blink_preprocessing
 add_executable(mapping_test tests/mapping_test.cpp)
 target_link_libraries(mapping_test blink_preprocessing)
 add_test(NAME mapping_test COMMAND mapping_test)
+
+add_executable(calibration_test tests/calibration_test.cpp)
+target_link_libraries(calibration_test blink_preprocessing)
+add_test(NAME calibration_test COMMAND calibration_test)
