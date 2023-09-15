@@ -7,6 +7,7 @@
 #include <cstdio>
 
 #include "../src/calibration.hpp"
+#include "../src/mapping.hpp"
 #include "common.hpp"
 
 
@@ -28,7 +29,7 @@ void ccm(const std::complex<T1>& a, const std::complex<T1>& b, std::complex<T2>&
 
 
 // Stores the path to the directory containing the test data.
-std::string dataRootDir;
+std::string data_root_dir;
 
 
 template <typename T>
@@ -89,7 +90,7 @@ void test_read_solution(){
     JonesMatrix<double>& jTestData {reinterpret_cast<JonesMatrix<double>&>(rawTestData)};
     
     solution_t sol;
-    std::string solpath {dataRootDir + "/mwa/1103645160/CASA/calibrated/1103645160.bin"};
+    std::string solpath {data_root_dir + "/mwa/1103645160/CASA/calibrated/1103645160.bin"};
     read_solution(solpath, sol);
     if(sol.data[0] != jTestData) throw TestFailed("test_read_solution failed.");
     std::cout << "'test_read_solution' passed." << std::endl;
@@ -130,11 +131,11 @@ void test_apply_one_solution(){
 */
 void test_calibration(){
     using vistype = double;
-    Visibilities<vistype> uncalibrated = vis_from_files<vistype>(dataRootDir + "/mwa/1103645160/CASA/uncalibrated", "1103645160");
-    Visibilities<vistype> reference_calibrated = vis_from_files<vistype>(dataRootDir + "/mwa/1103645160/CASA/calibrated", "1103645160");
+    Visibilities<vistype> uncalibrated = vis_from_files<vistype>(data_root_dir + "/mwa/1103645160/CASA/uncalibrated", "1103645160");
+    Visibilities<vistype> reference_calibrated = vis_from_files<vistype>(data_root_dir + "/mwa/1103645160/CASA/calibrated", "1103645160");
 
     solution_t sol;
-    std::string solpath {dataRootDir + "/mwa/1103645160/CASA/calibrated/1103645160.bin"};
+    std::string solpath {data_root_dir + "/mwa/1103645160/CASA/calibrated/1103645160.bin"};
     read_solution(solpath, sol);
     apply_solution<vistype>(uncalibrated, sol, 0);
     double maxdiff {0.0};
@@ -158,6 +159,36 @@ void test_calibration(){
     std::cout << "'test_calibration' passed. maxdiff = " << maxdiff << "." << std::endl;
 }
 
+
+void test_reorder_calibrated(){
+    const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
+	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
+    auto vis = Visibilities<float>::from_fits_file(vis_file);
+    auto mapping = get_visibilities_mapping(metadata_file);
+	auto reord_vis = reorder_visibilities(vis, mapping);
+    solution_t sol;
+    std::string solpath {data_root_dir + "/mwa/1276619416/1276625432.bin"};
+    read_solution(solpath, sol);
+    apply_solution<float>(reord_vis, sol, 0);
+	
+    const float expected_values[] {-523.286, -252.787, -223.328, 762.554, 466.479, 36.5678, 222.863, 71.7788};
+    const int n_baselines = 128 / 2 * 129;
+    const int matrix_size = n_baselines * 4 * 2;
+    const int baseline_idx = 1;
+    const int channel = 1;
+    const float* computed_values {
+        reinterpret_cast<float*>(reord_vis.data) + channel * matrix_size + baseline_idx * 8 
+    };
+    for(int i {0}; i < 8; i++){
+        auto diff = std::abs(expected_values[i] - computed_values[i]);
+        std::cout << "Diff between " << expected_values[i] << " and " << computed_values[i] << " is: " << diff << std::endl;
+        if( diff > 1e-3){
+            std::cerr << "expected_value[i] = " << expected_values[i] << ", computed_value[i] = " << computed_values[i] << std::endl;
+            throw TestFailed("'test_reorder_calibrated': values are different.");
+        }
+    }
+    std::cout << "'test_reorder_calibrated' passed." << std::endl;
+}
 
 
 /**
@@ -215,13 +246,14 @@ int main(void){
         std::cerr << "'" << ENV_DATA_ROOT_DIR << "' environment variable is not set." << std::endl;
         return -1;
     }
-    dataRootDir = std::string {pathToData};
+    data_root_dir = std::string {pathToData};
 
     try{
         test_read_solution();
         test_apply_one_solution();
         test_calibration();
         test_reciprocal();
+        test_reorder_calibrated();
      
     } catch (std::exception& ex){
         std::cerr << ex.what() << std::endl;
