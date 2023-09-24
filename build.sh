@@ -33,7 +33,7 @@ echo "Building the software.."
 
 [ -d build ] || mkdir build
 cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=Release
 make VERBOSE=1
 
 # Install the software

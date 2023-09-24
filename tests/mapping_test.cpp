@@ -28,7 +28,7 @@ void test_visibilities_mapping(){
 void test_reordering(){
 	const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
 	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
-    auto vis = Visibilities<float>::from_fits_file(vis_file);
+    auto vis = Visibilities::from_fits_file(vis_file);
     auto mapping = get_visibilities_mapping(metadata_file);
 	auto reord_vis = reorder_visibilities(vis, mapping);
 	
