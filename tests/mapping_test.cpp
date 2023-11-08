@@ -38,7 +38,7 @@ void test_reordering(){
     const int baseline_idx = 1;
     const int channel = 1;
     const float* computed_values {
-        reinterpret_cast<float*>(reord_vis.data) + channel * matrix_size + baseline_idx * 8 
+        reinterpret_cast<float*>(reord_vis.data()) + channel * matrix_size + baseline_idx * 8 
     };
     for(int i {0}; i < 8; i++){
         if(std::abs(expected_values[i] - computed_values[i]) > 1e-4){
@@ -56,7 +56,7 @@ int main(void){
         std::cerr << "'" << ENV_DATA_ROOT_DIR << "' environment variable is not set." << std::endl;
         return -1;
     }
-    data_root_dir = {pathToData};
+    data_root_dir = std::string {pathToData};
     try{
         test_pfb_mapping();
         test_visibilities_mapping();

@@ -48,10 +48,12 @@ vis_from_files
 Reads visibility matrix from a set of files as produced by Marcin's code to "dump a CASA measurement set.".
 */
 Visibilities vis_from_files(const std::string basepath, const std::string obs_id){
-    float *buffer (nullptr), *data {nullptr};
+    float *buffer (nullptr);
     size_t length {0};
     const int nAntennas {128}, nPolarisations {4};
     const int nBaselines {(nAntennas / 2) * (nAntennas + 1)};
+    MemoryBuffer<std::complex<float>> mb_data (nBaselines * nPolarisations, false, false);
+    float *data {reinterpret_cast<float*>(mb_data.data())};
     for(int cmplx {0}; cmplx < 2; cmplx++){
         for(int pol {0}; pol < nPolarisations; pol++){
             std::stringstream filename;
@@ -78,7 +80,7 @@ Visibilities vis_from_files(const std::string basepath, const std::string obs_id
         JonesMatrix<float>* m = reinterpret_cast<JonesMatrix<float>*>(&data[c * 8]);
         *m = m->conjtrans();        
     }
-    return Visibilities{reinterpret_cast<std::complex<float>*>(data), VCS_OBSERVATION_INFO, VCS_OBSERVATION_INFO.nTimesteps, VCS_OBSERVATION_INFO.nFrequencies};
+    return Visibilities{std::move(mb_data), VCS_OBSERVATION_INFO, VCS_OBSERVATION_INFO.nTimesteps, VCS_OBSERVATION_INFO.nFrequencies};
 }
 
 
@@ -143,8 +145,8 @@ void test_calibration(){
         unsigned int a1 {static_cast<unsigned int>(-0.5 + std::sqrt(0.25 + 2*baseline))};
         unsigned int a2 {baseline - ((a1 + 1) * a1)/2};
         if(a1 == a2) continue;
-        JonesMatrix<float>* m1 = reinterpret_cast<JonesMatrix<float>*>(&((float*)uncalibrated.data)[baseline * nPolarisations * 2]);
-        JonesMatrix<float>* m2 = reinterpret_cast<JonesMatrix<float>*>(&((float*)reference_calibrated.data)[baseline * nPolarisations * 2]);
+        JonesMatrix<float>* m1 = reinterpret_cast<JonesMatrix<float>*>(&((float*)uncalibrated.data())[baseline * nPolarisations * 2]);
+        JonesMatrix<float>* m2 = reinterpret_cast<JonesMatrix<float>*>(&((float*)reference_calibrated.data())[baseline * nPolarisations * 2]);
         
         double diff {(*m1 - *m2).max_abs()};
         if(diff > maxdiff) maxdiff = diff;
@@ -175,7 +177,7 @@ void test_reorder_calibrated(){
     const int baseline_idx = 1;
     const int channel = 1;
     const float* computed_values {
-        reinterpret_cast<float*>(reord_vis.data) + channel * matrix_size + baseline_idx * 8 
+        reinterpret_cast<const float*>(reord_vis.data()) + channel * matrix_size + baseline_idx * 8 
     };
     for(int i {0}; i < 8; i++){
         auto diff = std::abs(expected_values[i] - computed_values[i]);

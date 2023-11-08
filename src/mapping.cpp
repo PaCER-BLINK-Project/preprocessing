@@ -52,8 +52,8 @@ Visibilities reorder_visibilities(const Visibilities& vis, const antenna_mapping
     Visibilities final_vis {vis};
 
     for(int interval {0}; interval < n_intervals; interval++){
-        float* new_vis {reinterpret_cast<float*>(final_vis.data) + interval * matrix_size * n_channels};
-        float* curr_vis {reinterpret_cast<float*>(vis.data) + interval * matrix_size * n_channels};
+        float* new_vis {reinterpret_cast<float*>(final_vis.data()) + interval * matrix_size * n_channels};
+        const float* curr_vis {reinterpret_cast<const float*>(vis.data()) + interval * matrix_size * n_channels};
         for(int ch {0}; ch < n_channels; ch++){
             for(int src_baseline {0}; src_baseline < n_baselines; src_baseline++){
                 int source_a1 {static_cast<int>(-0.5 + std::sqrt(0.25 + 2*src_baseline))};

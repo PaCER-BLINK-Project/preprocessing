@@ -53,7 +53,7 @@ void apply_solution(Visibilities &vis, solution_t& sol, unsigned int coarse_chan
                 unsigned int a2 {baseline - ((a1 + 1) * a1)/2};
                 JonesMatrix<double> &solA = reinterpret_cast<JonesMatrix<double>&>(sol.data[a1 * sol.header.channelCount + solChannel]);
                 JonesMatrix<double> &solB = reinterpret_cast<JonesMatrix<double>&>(sol.data[a2 * sol.header.channelCount + solChannel]);
-                float *data {reinterpret_cast<float*>(vis.data) + nInterval * n_interval_values + matrix_size * ch + 8 * baseline};
+                float *data {reinterpret_cast<float*>(vis.data()) + nInterval * n_interval_values + matrix_size * ch + 8 * baseline};
                 
                 JonesMatrix<double> visData {JonesMatrix<double>::from_array<double, float>(data)};
                 JonesMatrix<double> tmp = calibrate_visibility(visData, solA, solB);
