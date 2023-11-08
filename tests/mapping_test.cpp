@@ -7,6 +7,7 @@
 
 std::string data_root_dir;
 
+std::vector<int> get_pfb_mapping();
 
 void test_pfb_mapping(){
     auto mapping = get_pfb_mapping();
@@ -19,7 +20,9 @@ void test_visibilities_mapping(){
     const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
 	auto mapping = get_visibilities_mapping(metadata_file);
     int ant, pol;
-    std::tie(ant, pol) = mapping[{1, 0}];
+    const int idx {mapping[2]};
+    ant = idx / 2;
+    pol = idx % 2;
     if(ant != 66 || pol != 1)
 	    throw TestFailed("'test_antenna_mapping' failed.");
     std::cout << "'test_antenna_mapping' passed." << std::endl;
