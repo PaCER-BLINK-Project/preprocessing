@@ -74,6 +74,7 @@ Visibilities reorder_visibilities_gpu(const Visibilities& vis, const MemoryBuffe
     const unsigned int matrix_size {n_baselines * n_pols * n_pols * 2};
     const unsigned int n_intervals {static_cast<unsigned int>(vis.integration_intervals())};
 
+    // TODO: avoid memory copying.
     Visibilities final_vis {vis};
 
     float* new_vis {reinterpret_cast<float*>(final_vis.data())};
@@ -83,6 +84,7 @@ Visibilities reorder_visibilities_gpu(const Visibilities& vis, const MemoryBuffe
     const dim3 n_blocks {n_intervals, n_channels};
 
     reorder_visibilities_kernel<<<n_blocks, threads_per_block>>>(curr_vis, mapping.data(), new_vis);
+    gpuCheckLastError();
     gpuDeviceSynchronize();
     
     return final_vis;
