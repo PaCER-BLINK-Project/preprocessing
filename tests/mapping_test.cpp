@@ -1,9 +1,12 @@
 #include <iostream>
 #include <cstring>
-#include<tuple>
+#include <tuple>
+#include <astroio.hpp>
 #include "common.hpp"
 #include "../src/mapping.hpp"
-
+#ifdef __GPU__
+#include "../src/mapping_gpu.hpp"
+#endif
 
 std::string data_root_dir;
 
@@ -33,7 +36,7 @@ void test_reordering(){
 	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
     auto vis = Visibilities::from_fits_file(vis_file);
     auto mapping = get_visibilities_mapping(metadata_file);
-	auto reord_vis = reorder_visibilities(vis, mapping);
+	auto reord_vis = reorder_visibilities_cpu(vis, mapping);
 	
     const float expected_values[] {342.5, -416.25, -346., 840., -308.5, 507., 292., 220.75};
     const int n_baselines = 128 / 2 * 129;
@@ -52,6 +55,29 @@ void test_reordering(){
     std::cout << "'test_reordering' passed." << std::endl;
 }
 
+#ifdef __GPU__
+void test_reordering_gpu(){
+
+    const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
+	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
+    auto vis = Visibilities::from_fits_file(vis_file);
+    auto mapping = get_visibilities_mapping(metadata_file);
+	auto reord_vis = reorder_visibilities_cpu(vis, mapping);
+    vis.to_gpu();
+    mapping.to_gpu();
+    auto reord_vis_gpu = reorder_visibilities_gpu(vis, mapping);
+    reord_vis_gpu.to_cpu();
+    
+    if(reord_vis.size() != reord_vis_gpu.size()) throw TestFailed("test_reordering_gpu: lengths differ!");
+    for(unsigned long long i {0}; i < reord_vis_gpu.size(); i++){
+        if (reord_vis[i].real() != reord_vis_gpu[i].real() ||  reord_vis[i].imag() != reord_vis_gpu[i].imag()){
+            throw TestFailed("test_reordering_gpu: elements differ!");
+        }
+    }
+    std::cout << "'test_reordering_gpu' passed." << std::endl;
+}
+#endif
+
 
 int main(void){
     char *pathToData {std::getenv(ENV_DATA_ROOT_DIR)};
@@ -64,8 +90,10 @@ int main(void){
         test_pfb_mapping();
         test_visibilities_mapping();
         test_reordering();
-
-    } catch (TestFailed ex){
+        #ifdef __GPU__
+        test_reordering_gpu();
+        #endif
+    } catch (std::exception& ex){
         std::cerr << ex.what() << std::endl;
         return 1;
     }

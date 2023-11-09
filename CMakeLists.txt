@@ -5,11 +5,6 @@ set(CMAKE_CXX_STANDARD 17)
 include(CTest)
 
 option(USE_OPENMP "Compile with OpenMP enabled." ON)
-option(USE_HIP "Compile the HIP implementation." OFF)
-
-if(USE_HIP AND (NOT CMAKE_CXX_COMPILER MATCHES "hipcc"))
-    message(FATAL_ERROR "HIP code must be compiled with hipcc.")
-endif()
 
 # External dependencies
 set(BLINK_TEST_DATADIR $ENV{BLINK_TEST_DATADIR})
@@ -22,14 +17,21 @@ if( NOT ASTROIO_LIB )
     message(FATAL_ERROR "ASTROIO not found.")
 endif()
 
-file(GLOB preprocessing_sources "src/*.cpp")
-file(GLOB preprocessing_headers "src/*.hpp")
+file(GLOB preprocessing_sources 
+    "src/calibration.cpp"
+    "src/mapping.cpp"
+)
+
+file(GLOB preprocessing_headers
+    "src/calibration.hpp"
+    "src/mapping.hpp"
+)
 
 if(CMAKE_CXX_COMPILER MATCHES "hipcc")
-	# file(GLOB hip_sources "src/hip/*.cpp")
-	# file(GLOB hip_headers "src/hip/*.hpp")
-	list(APPEND preprocessing_sources ${hip_sources})
-	list(APPEND preprocessing_headers ${hip_headers})
+	file(GLOB gpu_sources "src/mapping_gpu.cpp")
+	file(GLOB gpu_headers "src/mapping_gpu.hpp")
+	list(APPEND preprocessing_sources ${gpu_sources})
+	list(APPEND preprocessing_headers ${gpu_headers})
 endif()
 
 add_library(blink_preprocessing SHARED ${preprocessing_sources})

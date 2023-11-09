@@ -165,7 +165,7 @@ void test_reorder_calibrated(){
 	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
     auto vis = Visibilities::from_fits_file(vis_file);
     auto mapping = get_visibilities_mapping(metadata_file);
-	auto reord_vis = reorder_visibilities(vis, mapping);
+	auto reord_vis = reorder_visibilities_cpu(vis, mapping);
     solution_t sol;
     std::string solpath {data_root_dir + "/mwa/1276619416/1276625432.bin"};
     read_solution(solpath, sol);

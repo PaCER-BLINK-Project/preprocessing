@@ -7,7 +7,7 @@ source "${BASH_UTILS_DIR}/build_utils.sh"
 get_commit_hash
 
 PROGRAM_NAME=blink_preprocessing
-PROGRAM_VERSION=master #${COMMIT_HASH:0:7}
+PROGRAM_VERSION=no-template #master #${COMMIT_HASH:0:7}
 
  
 # the following function sets up the installation path according to the
@@ -16,7 +16,7 @@ PROGRAM_VERSION=master #${COMMIT_HASH:0:7}
 # - "group": install the software in the group wide directory
 # - "user": install the software only for the current user
 # - "test": install the software in the current working directory 
-process_build_script_input group # user
+process_build_script_input user
 
 
 # load all the modules required for the program to compile and run.
@@ -24,7 +24,7 @@ process_build_script_input group # user
 # that this script will generate.
 echo "Loading required modules ..."
 module reset
-module_load  blink_test_data/devel blink_astroio/master 
+module_load  blink_test_data/devel blink_astroio/no-template rocm/5.4.3 #master 
 
 # cmake is only required at build time, so we use the normal module load
 module load cmake/3.24.3
@@ -33,7 +33,7 @@ echo "Building the software.."
 
 [ -d build ] || mkdir build
 cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} -DCMAKE_CXX_COMPILER=hipcc -DCMAKE_C_COMPILER=hipcc -DCMAKE_BUILD_TYPE=Debug #Release
 make VERBOSE=1
 
 # Install the software
