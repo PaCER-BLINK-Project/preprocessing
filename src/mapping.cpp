@@ -2,7 +2,9 @@
 #include <metafits_mapping.hpp>
 #include "mapping.hpp"
 #include <unordered_map>
-
+#ifdef __GPU__
+#include "mapping_gpu.hpp"
+#endif
 
 inline int get_baseline_from_antenna_pair(int row, int col){
     return (row * (row + 1)) / 2 + col;
@@ -35,6 +37,19 @@ MemoryBuffer<int> get_visibilities_mapping(const std::string& metafits_filename)
         mb_mapping.data()[idx] = final_pos;
     }
     return mb_mapping;
+}
+
+
+
+Visibilities reorder_visibilities(const Visibilities& vis, const MemoryBuffer<int>& mapping){
+    #ifdef __GPU__
+    if(gpu_support() && num_available_gpus() > 0)
+        return reorder_visibilities_gpu(vis, mapping);
+    else
+        return reorder_visibilities_cpu(vis, mapping);
+    #else
+    return reorder_visibilities_cpu(vis, mapping);
+    #endif
 }
 
 
