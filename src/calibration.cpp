@@ -1,31 +1,33 @@
 #include "calibration.hpp"
+#include <memory_buffer.hpp>
 #include <fstream>
 
 
 
-void read_solution(std::string filename, solution_t& sol){
+CalibrationSolutions CalibrationSolutions::from_file(const std::string& filename){
     std::ifstream inp {filename,  std::ios::in | std::ios::binary};
-    inp.read(reinterpret_cast<char *>(&sol.header), sizeof(header_t));
+    CalibrationSolutions::Header header;
+    inp.read(reinterpret_cast<char *>(&header), sizeof(CalibrationSolutions::Header));
     if(!inp){
         std::cerr << "read_solution: error while reading input stream." << std::endl;
         throw std::exception();
     }
-    size_t nSolutions {sol.header.intervalCount * sol.header.antennaCount * sol.header.channelCount};
-    sol.data = new JonesMatrix<double>[nSolutions];
-    inp.read(reinterpret_cast<char *>(sol.data), sizeof(JonesMatrix<double>) * nSolutions);
+    size_t n_solutions {header.interval_count * header.antenna_count * header.channel_count};
+    MemoryBuffer<JonesMatrix<double>> mb_sol {n_solutions, false,  false};
+    inp.read(reinterpret_cast<char*>(mb_sol.data()), sizeof(JonesMatrix<double>) * n_solutions);
     if(!inp){
         std::cerr << "read_solution: error while reading input stream." << std::endl;
         throw std::exception();
     }
+    return {std::move(mb_sol), header};
 }
 
 
-
-void apply_solution(Visibilities &vis, solution_t& sol, unsigned int coarse_channel_index){
-    if(sol.header.channelCount % 24 != 0) throw std::exception();
-    if(sol.header.antennaCount != vis.obsInfo.nAntennas) throw std::exception();
+void apply_solutions_cpu(Visibilities &vis, const CalibrationSolutions& sol, unsigned int coarse_channel_index){
+    if(sol.header.channel_count % 24 != 0) throw std::exception();
+    if(sol.header.antenna_count != vis.obsInfo.nAntennas) throw std::exception();
     
-    const unsigned int n_solfreq_per_band = sol.header.channelCount / 24u;
+    const unsigned int n_solfreq_per_band = sol.header.channel_count / 24u;
     const unsigned int solutions_offset = coarse_channel_index * n_solfreq_per_band;
     
     int channelRatio;
@@ -51,8 +53,8 @@ void apply_solution(Visibilities &vis, solution_t& sol, unsigned int coarse_chan
             
                 unsigned int a1 {static_cast<unsigned int>(-0.5 + std::sqrt(0.25 + 2*baseline))};
                 unsigned int a2 {baseline - ((a1 + 1) * a1)/2};
-                JonesMatrix<double> &solA = reinterpret_cast<JonesMatrix<double>&>(sol.data[a1 * sol.header.channelCount + solChannel]);
-                JonesMatrix<double> &solB = reinterpret_cast<JonesMatrix<double>&>(sol.data[a2 * sol.header.channelCount + solChannel]);
+                const JonesMatrix<double> &solA = sol.data()[a1 * sol.header.channel_count + solChannel];
+                const JonesMatrix<double> &solB = sol.data()[a2 * sol.header.channel_count + solChannel];
                 float *data {reinterpret_cast<float*>(vis.data()) + nInterval * n_interval_values + matrix_size * ch + 8 * baseline};
                 
                 JonesMatrix<double> visData {JonesMatrix<double>::from_array<double, float>(data)};

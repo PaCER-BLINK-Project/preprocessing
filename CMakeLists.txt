@@ -28,8 +28,14 @@ file(GLOB preprocessing_headers
 )
 
 if(CMAKE_CXX_COMPILER MATCHES "hipcc")
-	file(GLOB gpu_sources "src/mapping_gpu.cpp")
-	file(GLOB gpu_headers "src/mapping_gpu.hpp")
+	file(GLOB gpu_sources
+        "src/mapping_gpu.cpp"
+        "src/calibration_gpu.cpp"
+    )
+	file(GLOB gpu_headers 
+        "src/mapping_gpu.hpp"
+        "src/calibration_gpu.hpp"
+    )
 	list(APPEND preprocessing_sources ${gpu_sources})
 	list(APPEND preprocessing_headers ${gpu_headers})
 endif()

@@ -10,6 +10,11 @@
 #include "../src/mapping.hpp"
 #include "common.hpp"
 
+#ifdef __GPU__
+#include "../src/calibration_gpu.hpp"
+#include "../src/mapping_gpu.hpp"
+#endif
+
 
 /**
  * @brief Compute the conjugate cross multiply (ccm) between complex numbers `a` and `b`
@@ -89,11 +94,10 @@ void test_read_solution(){
     // as read by aocal.py
     double rawTestData[] {-0.7241842844376969, 1.1922007333545488, 0.0, 0.0, 0.0, 0.0, -0.14706941378717175, 0.9448835886397396};
     JonesMatrix<double>& jTestData {reinterpret_cast<JonesMatrix<double>&>(rawTestData)};
+    const std::string sol_file {data_root_dir + "/mwa/1103645160/CASA/calibrated/1103645160.bin"};
+    auto sol = CalibrationSolutions::from_file(sol_file);
     
-    solution_t sol;
-    std::string solpath {data_root_dir + "/mwa/1103645160/CASA/calibrated/1103645160.bin"};
-    read_solution(solpath, sol);
-    if(sol.data[0] != jTestData) throw TestFailed("test_read_solution failed.");
+    if(sol.data()[0] != jTestData) throw TestFailed("test_read_solution failed.");
     std::cout << "'test_read_solution' passed." << std::endl;
 }
 
@@ -133,11 +137,9 @@ void test_apply_one_solution(){
 void test_calibration(){
     Visibilities uncalibrated = vis_from_files(data_root_dir + "/mwa/1103645160/CASA/uncalibrated", "1103645160");
     Visibilities reference_calibrated = vis_from_files(data_root_dir + "/mwa/1103645160/CASA/calibrated", "1103645160");
-
-    solution_t sol;
-    std::string solpath {data_root_dir + "/mwa/1103645160/CASA/calibrated/1103645160.bin"};
-    read_solution(solpath, sol);
-    apply_solution(uncalibrated, sol, 0);
+    const std::string sol_file {data_root_dir + "/mwa/1103645160/CASA/calibrated/1103645160.bin"};
+    const auto sol = CalibrationSolutions::from_file(sol_file);
+    apply_solutions_cpu(uncalibrated, sol, 0);
     double maxdiff {0.0};
     const unsigned int nBaselines {uncalibrated.obsInfo.nAntennas / 2 * (uncalibrated.obsInfo.nAntennas + 1)};
     const unsigned int nPolarisations {4};
@@ -163,13 +165,12 @@ void test_calibration(){
 void test_reorder_calibrated(){
     const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
 	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
+    const std::string sol_file {data_root_dir + "/mwa/1276619416/1276625432.bin"};
     auto vis = Visibilities::from_fits_file(vis_file);
     auto mapping = get_visibilities_mapping(metadata_file);
 	auto reord_vis = reorder_visibilities_cpu(vis, mapping);
-    solution_t sol;
-    std::string solpath {data_root_dir + "/mwa/1276619416/1276625432.bin"};
-    read_solution(solpath, sol);
-    apply_solution(reord_vis, sol, 0);
+    auto sol = CalibrationSolutions::from_file(sol_file);
+    apply_solutions_cpu(reord_vis, sol, 0);
 	
     const float expected_values[] {-523.286, -252.787, -223.328, 762.554, 466.479, 36.5678, 222.863, 71.7788};
     const int n_baselines = 128 / 2 * 129;
@@ -190,6 +191,38 @@ void test_reorder_calibrated(){
     std::cout << "'test_reorder_calibrated' passed." << std::endl;
 }
 
+
+void test_reorder_calibrated_gpu(){
+    const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
+	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
+    const std::string sol_file {data_root_dir + "/mwa/1276619416/1276625432.bin"};
+    auto vis = Visibilities::from_fits_file(vis_file);
+    auto mapping = get_visibilities_mapping(metadata_file);
+    vis.to_gpu();
+    mapping.to_gpu();
+	auto reord_vis = reorder_visibilities_gpu(vis, mapping);
+    auto sol = CalibrationSolutions::from_file(sol_file);
+    sol.to_gpu();
+    apply_solutions_gpu(reord_vis, sol, 0);
+
+    const float expected_values[] {-523.286, -252.787, -223.328, 762.554, 466.479, 36.5678, 222.863, 71.7788};
+    const int n_baselines = 128 / 2 * 129;
+    const int matrix_size = n_baselines * 4 * 2;
+    const int baseline_idx = 1;
+    const int channel = 1;
+    const float* computed_values {
+        reinterpret_cast<const float*>(reord_vis.data()) + channel * matrix_size + baseline_idx * 8 
+    };
+    for(int i {0}; i < 8; i++){
+        auto diff = std::abs(expected_values[i] - computed_values[i]);
+        std::cout << "Diff between " << expected_values[i] << " and " << computed_values[i] << " is: " << diff << std::endl;
+        if( diff > 1e-3){
+            std::cerr << "expected_value[i] = " << expected_values[i] << ", computed_value[i] = " << computed_values[i] << std::endl;
+            throw TestFailed("'test_reorder_calibrated': values are different.");
+        }
+    }
+    std::cout << "'test_reorder_calibrated' passed." << std::endl;
+}
 
 /**
  * @brief This test confirms that the calibrated visibilities 
@@ -256,6 +289,7 @@ int main(void){
         // test_calibration();
         test_reciprocal();
         test_reorder_calibrated();
+        test_reorder_calibrated_gpu();
      
     } catch (std::exception& ex){
         std::cerr << ex.what() << std::endl;
