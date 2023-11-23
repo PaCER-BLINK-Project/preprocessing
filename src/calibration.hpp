@@ -32,7 +32,7 @@ inline JonesMatrix<T> calibrate_visibility(const JonesMatrix<T>& vis, const Jone
     return solA * tmp;
 }
 
-void apply_solutions(Visibilities &vis, const CalibrationSolutions& sol, unsigned int coarse_channel_index);
+void apply_solutions(Visibilities &vis, CalibrationSolutions& sol, unsigned int coarse_channel_index);
 
 
 

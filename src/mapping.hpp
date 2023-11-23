@@ -17,7 +17,7 @@ MemoryBuffer<int> get_visibilities_mapping(const std::string& metafits_filename)
  * 
  * @return A Visibilities object containing reordered data.
 */
-Visibilities reorder_visibilities(const Visibilities& vis, const MemoryBuffer<int>& mapping);
+Visibilities reorder_visibilities(const Visibilities& vis, MemoryBuffer<int>& mapping);
 
 /**
  * @brief CPU implementation of `reorder_visibilities`.
