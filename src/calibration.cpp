@@ -1,7 +1,9 @@
 #include "calibration.hpp"
 #include <memory_buffer.hpp>
 #include <fstream>
-
+#ifdef __GPU__
+#include "calibration_gpu.hpp"
+#endif
 
 
 CalibrationSolutions CalibrationSolutions::from_file(const std::string& filename){
@@ -21,6 +23,20 @@ CalibrationSolutions CalibrationSolutions::from_file(const std::string& filename
     }
     return {std::move(mb_sol), header};
 }
+
+
+
+void apply_solutions(Visibilities &vis, const CalibrationSolutions& sol, unsigned int coarse_channel_index){
+    #ifdef __GPU__
+    if(gpu_support() && num_available_gpus() > 0)
+        return apply_solutions_gpu(vis, sol, coarse_channel_index);
+    else
+        return apply_solutions_cpu(vis, sol, coarse_channel_index);
+    #else
+    return apply_solutions_cpu(vis, sol, coarse_channel_index);
+    #endif
+}
+
 
 
 void apply_solutions_cpu(Visibilities &vis, const CalibrationSolutions& sol, unsigned int coarse_channel_index){
