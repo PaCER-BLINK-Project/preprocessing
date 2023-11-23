@@ -26,12 +26,15 @@ CalibrationSolutions CalibrationSolutions::from_file(const std::string& filename
 
 
 
-void apply_solutions(Visibilities &vis, const CalibrationSolutions& sol, unsigned int coarse_channel_index){
+void apply_solutions(Visibilities &vis, CalibrationSolutions& sol, unsigned int coarse_channel_index){
     #ifdef __GPU__
-    if(gpu_support() && num_available_gpus() > 0)
+    if(gpu_support() && num_available_gpus() > 0 && vis.on_gpu()){
+        sol.to_gpu();
         return apply_solutions_gpu(vis, sol, coarse_channel_index);
-    else
+    }else{
+        sol.to_cpu();
         return apply_solutions_cpu(vis, sol, coarse_channel_index);
+    }
     #else
     return apply_solutions_cpu(vis, sol, coarse_channel_index);
     #endif

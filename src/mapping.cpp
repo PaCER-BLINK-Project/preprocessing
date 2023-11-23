@@ -41,12 +41,15 @@ MemoryBuffer<int> get_visibilities_mapping(const std::string& metafits_filename)
 
 
 
-Visibilities reorder_visibilities(const Visibilities& vis, const MemoryBuffer<int>& mapping){
+Visibilities reorder_visibilities(const Visibilities& vis, MemoryBuffer<int>& mapping){
     #ifdef __GPU__
-    if(gpu_support() && num_available_gpus() > 0)
+    if(gpu_support() && num_available_gpus() > 0 && vis.on_gpu()){
+        mapping.to_gpu();
         return reorder_visibilities_gpu(vis, mapping);
-    else
+    }else{
+        mapping.to_cpu();
         return reorder_visibilities_cpu(vis, mapping);
+    }
     #else
     return reorder_visibilities_cpu(vis, mapping);
     #endif
