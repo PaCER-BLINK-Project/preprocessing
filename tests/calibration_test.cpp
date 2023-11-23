@@ -204,7 +204,7 @@ void test_reorder_calibrated_gpu(){
     auto sol = CalibrationSolutions::from_file(sol_file);
     sol.to_gpu();
     apply_solutions_gpu(reord_vis, sol, 0);
-
+    reord_vis.to_cpu();
     const float expected_values[] {-523.286, -252.787, -223.328, 762.554, 466.479, 36.5678, 222.863, 71.7788};
     const int n_baselines = 128 / 2 * 129;
     const int matrix_size = n_baselines * 4 * 2;
@@ -221,7 +221,7 @@ void test_reorder_calibrated_gpu(){
             throw TestFailed("'test_reorder_calibrated': values are different.");
         }
     }
-    std::cout << "'test_reorder_calibrated' passed." << std::endl;
+    std::cout << "'test_reorder_calibrated_gpu' passed." << std::endl;
 }
 #endif
 /**
