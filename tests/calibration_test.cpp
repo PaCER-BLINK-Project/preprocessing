@@ -191,7 +191,7 @@ void test_reorder_calibrated(){
     std::cout << "'test_reorder_calibrated' passed." << std::endl;
 }
 
-
+#ifdef __GPU__
 void test_reorder_calibrated_gpu(){
     const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
 	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
@@ -223,7 +223,7 @@ void test_reorder_calibrated_gpu(){
     }
     std::cout << "'test_reorder_calibrated' passed." << std::endl;
 }
-
+#endif
 /**
  * @brief This test confirms that the calibrated visibilities 
  * of the lower triangular matrix are equal to the calibrated 
@@ -289,7 +289,9 @@ int main(void){
         // test_calibration();
         test_reciprocal();
         test_reorder_calibrated();
+        #ifdef __GPU__
         test_reorder_calibrated_gpu();
+        #endif
      
     } catch (std::exception& ex){
         std::cerr << ex.what() << std::endl;

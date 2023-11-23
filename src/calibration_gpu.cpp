@@ -2,34 +2,36 @@
 #include <memory_buffer.hpp>
 #include <fstream>
 
-__global__ void apply_solutions_kernel(Visibilities &vis, const CalibrationSolutions& sol, unsigned int coarse_channel_index){
-    const unsigned int n_solfreq_per_band = sol.header.channel_count / 24u;
+__global__ void apply_solutions_kernel(float* vis, ObservationInfo obsInfo, const JonesMatrix<double>* const sol,
+        CalibrationSolutions::Header sol_header, unsigned int coarse_channel_index){
+
+    const unsigned int n_solfreq_per_band = sol_header.channel_count / 24u;
     const unsigned int solutions_offset = coarse_channel_index * n_solfreq_per_band;
-    const unsigned int n_baselines {(vis.obsInfo.nAntennas + 1) * (vis.obsInfo.nAntennas / 2)};
-    const size_t matrix_size {n_baselines * vis.obsInfo.nPolarizations * vis.obsInfo.nPolarizations * 2};
-    const size_t n_interval_values {matrix_size * vis.nFrequencies};
+    const unsigned int n_baselines {(obsInfo.nAntennas + 1) * (obsInfo.nAntennas / 2)};
+    const size_t matrix_size {n_baselines * obsInfo.nPolarizations * obsInfo.nPolarizations * 2};
     const unsigned int n_channels {gridDim.y};
+    const size_t n_interval_values {matrix_size * n_channels};
     const unsigned int interval {blockIdx.x};
     const unsigned int ch {blockIdx.y};
 
     int channelRatio;
-    if(n_solfreq_per_band > vis.nFrequencies)
-        channelRatio = n_solfreq_per_band / vis.nFrequencies;
+    if(n_solfreq_per_band > n_channels)
+        channelRatio = n_solfreq_per_band / n_channels;
     else
-        channelRatio =  vis.nFrequencies / n_solfreq_per_band;
+        channelRatio =  n_channels / n_solfreq_per_band;
 
     for(unsigned int baseline {threadIdx.x}; baseline < n_baselines; baseline+= blockDim.x){
         unsigned int solChannel;
-        if(n_solfreq_per_band > vis.nFrequencies)
+        if(n_solfreq_per_band > n_channels)
             solChannel = (ch + solutions_offset) * channelRatio;
         else
             solChannel = (ch + solutions_offset) / channelRatio;
     
         unsigned int a1 {static_cast<unsigned int>(-0.5 + std::sqrt(0.25 + 2*baseline))};
         unsigned int a2 {baseline - ((a1 + 1) * a1)/2};
-        const JonesMatrix<double> &solA = sol.data()[a1 * sol.header.channel_count + solChannel];
-        const JonesMatrix<double> &solB = sol.data()[a2 * sol.header.channel_count + solChannel];
-        float *data {reinterpret_cast<float*>(vis.data()) + interval * n_interval_values + matrix_size * ch + 8 * baseline};
+        const JonesMatrix<double> &solA = sol[a1 * sol_header.channel_count + solChannel];
+        const JonesMatrix<double> &solB = sol[a2 * sol_header.channel_count + solChannel];
+        float *data {vis + interval * n_interval_values + matrix_size * ch + 8 * baseline};
         
         JonesMatrix<double> visData {JonesMatrix<double>::from_array<double, float>(data)};
         JonesMatrix<double> tmp = solA * (visData * solB.conjtrans());
@@ -55,7 +57,8 @@ void apply_solutions_gpu(Visibilities &vis, const CalibrationSolutions& sol, uns
     const int threads_per_block {1024};
     const dim3 n_blocks {static_cast<unsigned int>(vis.integration_intervals()), vis.nFrequencies};
 
-    apply_solutions_kernel<<<n_blocks, threads_per_block>>>(vis, sol, coarse_channel_index);
+    apply_solutions_kernel<<<n_blocks, threads_per_block>>>(
+        reinterpret_cast<float*>(vis.data()), vis.obsInfo, sol.data(), sol.header, coarse_channel_index);
     gpuCheckLastError();
     gpuDeviceSynchronize();
 }
