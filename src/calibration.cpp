@@ -79,14 +79,14 @@ void apply_solutions_cpu(Visibilities &vis, const CalibrationSolutions& sol, uns
                 JonesMatrix<double> visData {JonesMatrix<double>::from_array<double, float>(data)};
                 JonesMatrix<double> tmp = calibrate_visibility(visData, solA, solB);
 
-                data[0] = static_cast<float>(tmp.XX.real());
-                data[1] = static_cast<float>(tmp.XX.imag());
-                data[2] = static_cast<float>(tmp.XY.real());
-                data[3] = static_cast<float>(tmp.XY.imag());
-                data[4] = static_cast<float>(tmp.YX.real());
-                data[5] = static_cast<float>(tmp.YX.imag());
-                data[6] = static_cast<float>(tmp.YY.real());
-                data[7] = static_cast<float>(tmp.YY.imag());
+                data[0] = static_cast<float>(tmp.XX.real);
+                data[1] = static_cast<float>(tmp.XX.imag);
+                data[2] = static_cast<float>(tmp.XY.real);
+                data[3] = static_cast<float>(tmp.XY.imag);
+                data[4] = static_cast<float>(tmp.YX.real);
+                data[5] = static_cast<float>(tmp.YX.imag);
+                data[6] = static_cast<float>(tmp.YY.real);
+                data[7] = static_cast<float>(tmp.YY.imag);
             }
         }
     }

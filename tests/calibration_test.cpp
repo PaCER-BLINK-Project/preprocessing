@@ -17,7 +17,7 @@
 
 
 /**
- * @brief Compute the conjugate cross multiply (ccm) between complex numbers `a` and `b`
+ * @brief Compute the conjugate cross multiply (ccm) between std::complex numbers `a` and `b`
  * and add the result to the `res` accumulator.
  * 
  * @tparam T1 
@@ -27,11 +27,10 @@
  * @param res 
  */
 template <typename T1, typename T2>
-void ccm(const std::complex<T1>& a, const std::complex<T1>& b, std::complex<T2>& res){
-    res.real(res.real() + static_cast<T2>(a.real()) * b.real() + static_cast<T2>(a.imag()) * b.imag());
-    res.imag(res.imag() + static_cast<T2>(a.imag()) * b.real() - static_cast<T2>(a.real()) * b.imag());
+__host__ __device__ void ccm(const Complex<T1>& a, const Complex<T1>& b, Complex<T2>& res){
+    res.real += static_cast<T2>(a.real) * b.real + static_cast<T2>(a.imag) * b.imag;
+    res.imag += static_cast<T2>(a.imag) * b.real - static_cast<T2>(a.real) * b.imag;
 }
-
 
 // Stores the path to the directory containing the test data.
 std::string data_root_dir;
@@ -194,16 +193,20 @@ void test_reorder_calibrated(){
 #ifdef __GPU__
 void test_reorder_calibrated_gpu(){
     const std::string metadata_file {data_root_dir + "/mwa/1276619416/20200619163000.metafits"}; 
-	const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
+    const std::string vis_file {data_root_dir + "/mwa/1276619416/visibilities/1276619416_20200619163000_gpubox24_00.fits"};
     const std::string sol_file {data_root_dir + "/mwa/1276619416/1276625432.bin"};
     auto vis = Visibilities::from_fits_file(vis_file);
     auto mapping = get_visibilities_mapping(metadata_file);
     vis.to_gpu();
     mapping.to_gpu();
-	auto reord_vis = reorder_visibilities_gpu(vis, mapping);
+    auto reord_vis = reorder_visibilities_gpu(vis, mapping);
+    gpuDeviceSynchronize();
     auto sol = CalibrationSolutions::from_file(sol_file);
     sol.to_gpu();
+    std::cerr << "BEFORE APPLYING SOLUTION.." << std::endl;
+    gpuDeviceSynchronize();
     apply_solutions_gpu(reord_vis, sol, 0);
+    std::cerr << "AFTER APPLYING SOLUTION.." << std::endl;
     reord_vis.to_cpu();
     const float expected_values[] {-523.286, -252.787, -223.328, 762.554, 466.479, 36.5678, 222.863, 71.7788};
     const int n_baselines = 128 / 2 * 129;
@@ -234,10 +237,10 @@ void test_reorder_calibrated_gpu(){
 */
 void test_reciprocal(){
 
-    std::complex<double> X1 {53, 41};
-    std::complex<double> Y1 {33, 71};
-    std::complex<double> X2 {35, 11};
-    std::complex<double> Y2 {13, 76};
+    Complex<double> X1 {53, 41};
+    Complex<double> Y1 {33, 71};
+    Complex<double> X2 {35, 11};
+    Complex<double> Y2 {13, 76};
 
      // antenna 0
     double _solA[] {-0.72418428, 1.19220073, 0., 0, 0., 0., -0.14706941, 0.94488359};

@@ -36,14 +36,14 @@ __global__ void apply_solutions_kernel(float* vis, ObservationInfo obsInfo, cons
         JonesMatrix<double> visData {JonesMatrix<double>::from_array<double, float>(data)};
         JonesMatrix<double> tmp = solA * (visData * solB.conjtrans());
 
-        data[0] = static_cast<float>(tmp.XX.real());
-        data[1] = static_cast<float>(tmp.XX.imag());
-        data[2] = static_cast<float>(tmp.XY.real());
-        data[3] = static_cast<float>(tmp.XY.imag());
-        data[4] = static_cast<float>(tmp.YX.real());
-        data[5] = static_cast<float>(tmp.YX.imag());
-        data[6] = static_cast<float>(tmp.YY.real());
-        data[7] = static_cast<float>(tmp.YY.imag());
+        data[0] = static_cast<float>(tmp.XX.real);
+        data[1] = static_cast<float>(tmp.XX.imag);
+        data[2] = static_cast<float>(tmp.XY.real);
+        data[3] = static_cast<float>(tmp.XY.imag);
+        data[4] = static_cast<float>(tmp.YX.real);
+        data[5] = static_cast<float>(tmp.YX.imag);
+        data[6] = static_cast<float>(tmp.YY.real);
+        data[7] = static_cast<float>(tmp.YY.imag);
     }
 }
 
