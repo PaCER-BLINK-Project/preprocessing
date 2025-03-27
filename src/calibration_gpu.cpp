@@ -23,9 +23,9 @@ __global__ void apply_solutions_kernel(float* vis, ObservationInfo obsInfo, cons
     for(unsigned int baseline {threadIdx.x}; baseline < n_baselines; baseline+= blockDim.x){
         unsigned int solChannel;
         if(n_solfreq_per_band > n_channels)
-            solChannel = (ch + solutions_offset) * channelRatio;
+            solChannel = solutions_offset + ch * channelRatio;
         else
-            solChannel = (ch + solutions_offset) / channelRatio;
+            solChannel = solutions_offset + ch / channelRatio;
     
         unsigned int a1 {static_cast<unsigned int>(-0.5 + std::sqrt(0.25 + 2*baseline))};
         unsigned int a2 {baseline - ((a1 + 1) * a1)/2};

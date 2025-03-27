@@ -66,9 +66,9 @@ void apply_solutions_cpu(Visibilities &vis, const CalibrationSolutions& sol, uns
             for(unsigned int ch {0}; ch < vis.nFrequencies; ch++){
                 unsigned int solChannel;
                 if(n_solfreq_per_band > vis.nFrequencies)
-                    solChannel = (ch + solutions_offset) * channelRatio;
+                    solChannel = solutions_offset + ch * channelRatio;
                 else
-                    solChannel = (ch + solutions_offset) / channelRatio;
+                    solChannel = solutions_offset + ch / channelRatio;
             
                 unsigned int a1 {static_cast<unsigned int>(-0.5 + std::sqrt(0.25 + 2*baseline))};
                 unsigned int a2 {baseline - ((a1 + 1) * a1)/2};
