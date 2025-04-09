@@ -36,14 +36,14 @@ __global__ void apply_solutions_kernel(float* vis, ObservationInfo obsInfo, cons
         JonesMatrix<double> visData {JonesMatrix<double>::from_array<double, float>(data)};
         JonesMatrix<double> tmp = solA * (visData * solB.conjtrans());
 
-        data[0] = static_cast<float>(tmp.XX.real());
-        data[1] = static_cast<float>(tmp.XX.imag());
-        data[2] = static_cast<float>(tmp.XY.real());
-        data[3] = static_cast<float>(tmp.XY.imag());
-        data[4] = static_cast<float>(tmp.YX.real());
-        data[5] = static_cast<float>(tmp.YX.imag());
-        data[6] = static_cast<float>(tmp.YY.real());
-        data[7] = static_cast<float>(tmp.YY.imag());
+        data[0] = static_cast<float>(tmp.XX.real);
+        data[1] = static_cast<float>(tmp.XX.imag);
+        data[2] = static_cast<float>(tmp.XY.real);
+        data[3] = static_cast<float>(tmp.XY.imag);
+        data[4] = static_cast<float>(tmp.YX.real);
+        data[5] = static_cast<float>(tmp.YX.imag);
+        data[6] = static_cast<float>(tmp.YY.real);
+        data[7] = static_cast<float>(tmp.YY.imag);
     }
 }
 
@@ -54,7 +54,7 @@ void apply_solutions_gpu(Visibilities &vis, const CalibrationSolutions& sol, uns
     if(!vis.on_gpu())  throw std::runtime_error("apply_solutions_gpu: 'vis' is not allocated on GPU.");
     if(!sol.on_gpu())  throw std::runtime_error("apply_solutions_gpu: 'sol' is not allocated on GPU.");
 
-    const int threads_per_block {1024};
+    const int threads_per_block {512};
     const dim3 n_blocks {static_cast<unsigned int>(vis.integration_intervals()), vis.nFrequencies};
 
     apply_solutions_kernel<<<n_blocks, threads_per_block>>>(

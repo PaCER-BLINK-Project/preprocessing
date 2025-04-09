@@ -80,7 +80,7 @@ Visibilities reorder_visibilities_gpu(const Visibilities& vis, const MemoryBuffe
     float* new_vis {reinterpret_cast<float*>(final_vis.data())};
     const float* curr_vis {reinterpret_cast<const float*>(vis.data())};
 
-    const int threads_per_block {1024};
+    const int threads_per_block {512};
     const dim3 n_blocks {n_intervals, n_channels};
 
     reorder_visibilities_kernel<<<n_blocks, threads_per_block>>>(curr_vis, mapping.data(), new_vis);

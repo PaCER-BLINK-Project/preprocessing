@@ -27,9 +27,9 @@
  * @param res 
  */
 template <typename T1, typename T2>
-void ccm(const std::complex<T1>& a, const std::complex<T1>& b, std::complex<T2>& res){
-    res.real(res.real() + static_cast<T2>(a.real()) * b.real() + static_cast<T2>(a.imag()) * b.imag());
-    res.imag(res.imag() + static_cast<T2>(a.imag()) * b.real() - static_cast<T2>(a.real()) * b.imag());
+void ccm(const Complex<T1>& a, const Complex<T1>& b, Complex<T2>& res){
+    res.real = res.real + static_cast<T2>(a.real) * b.real + static_cast<T2>(a.imag) * b.imag;
+    res.imag = res.imag + static_cast<T2>(a.imag) * b.real - static_cast<T2>(a.real) * b.imag;
 }
 
 
@@ -234,10 +234,10 @@ void test_reorder_calibrated_gpu(){
 */
 void test_reciprocal(){
 
-    std::complex<double> X1 {53, 41};
-    std::complex<double> Y1 {33, 71};
-    std::complex<double> X2 {35, 11};
-    std::complex<double> Y2 {13, 76};
+    Complex<double> X1 {53, 41};
+    Complex<double> Y1 {33, 71};
+    Complex<double> X2 {35, 11};
+    Complex<double> Y2 {13, 76};
 
      // antenna 0
     double _solA[] {-0.72418428, 1.19220073, 0., 0, 0., 0., -0.14706941, 0.94488359};
