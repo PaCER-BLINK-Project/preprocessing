@@ -20,7 +20,7 @@ class CalibrationSolutions : public MemoryBuffer<JonesMatrix<double>> {
     };
 
     CalibrationSolutions::Header header;
-
+    CalibrationSolutions() : MemoryBuffer {} {};
     CalibrationSolutions(MemoryBuffer<JonesMatrix<double>>&& data, CalibrationSolutions::Header& header) : MemoryBuffer {data}, header {header} {};
     static CalibrationSolutions from_file(const std::string& filename);
 };
