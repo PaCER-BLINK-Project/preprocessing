@@ -1,7 +1,7 @@
 #ifndef __CALIBRATION_H__
 #define __CALIBRATION_H__
 
-//#include <cctype>
+#include <cstdint>
 #include <jones_matrix.hpp>
 #include <memory_buffer.hpp>
 #include <astroio.hpp>
