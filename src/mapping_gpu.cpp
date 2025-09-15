@@ -7,11 +7,10 @@ __device__ inline int get_baseline_from_antenna_pair(int row, int col){
     return (row * (row + 1)) / 2 + col;
 }
 
-__global__ void reorder_visibilities_kernel(const float *current_vis, const int *mapping, float *new_vis){
+__global__ void reorder_visibilities_kernel(const float *current_vis, unsigned int n_antennas, const int *mapping, float *new_vis){
     
-    const unsigned int n_antennas {128};
     const unsigned int n_pols {2};
-    const unsigned int n_baselines {(n_antennas + 1) * (n_antennas / 2)};
+    const unsigned int n_baselines {((n_antennas + 1) * n_antennas) / 2};
     const unsigned int matrix_size {n_baselines * n_pols * n_pols * 2};
     const unsigned int n_channels {gridDim.y};
     const unsigned int interval {blockIdx.x};
@@ -67,10 +66,10 @@ Visibilities reorder_visibilities_gpu(const Visibilities& vis, const MemoryBuffe
     if(!vis.on_gpu()) throw std::runtime_error("reorder_visibilities_gpu: 'vis' is not allocated on GPU.");
     if(!mapping.on_gpu()) throw std::runtime_error("reorder_visibilities_gpu: 'mapping' is not allocated on GPU.");
     
-    const unsigned int n_antennas {128u};
+    const unsigned int n_antennas {vis.obsInfo.nAntennas};
     const unsigned int n_pols {2u};
     const unsigned int n_channels {vis.nFrequencies};
-    const unsigned int n_baselines {(n_antennas + 1) * (n_antennas / 2)};
+    const unsigned int n_baselines {((n_antennas + 1) * n_antennas) / 2};
     const unsigned int matrix_size {n_baselines * n_pols * n_pols * 2};
     const unsigned int n_intervals {static_cast<unsigned int>(vis.integration_intervals())};
 
@@ -83,7 +82,7 @@ Visibilities reorder_visibilities_gpu(const Visibilities& vis, const MemoryBuffe
     const int threads_per_block {512};
     const dim3 n_blocks {n_intervals, n_channels};
 
-    reorder_visibilities_kernel<<<n_blocks, threads_per_block>>>(curr_vis, mapping.data(), new_vis);
+    reorder_visibilities_kernel<<<n_blocks, threads_per_block>>>(curr_vis, n_antennas, mapping.data(), new_vis);
     gpuCheckLastError();
     gpuDeviceSynchronize();
     

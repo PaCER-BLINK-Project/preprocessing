@@ -1,6 +1,7 @@
 #include <astroio.hpp>
 #include <metafits_mapping.hpp>
 #include "mapping.hpp"
+#include <stdexcept>
 #include <unordered_map>
 #ifdef __GPU__
 #include "mapping_gpu.hpp"
@@ -59,30 +60,30 @@ Visibilities reorder_visibilities(const Visibilities& vis, MemoryBuffer<int>& ma
 
 Visibilities reorder_visibilities_cpu(const Visibilities& vis, const MemoryBuffer<int>& mapping){
     // TODO enforce this function to be applied only to MWA legacy data
-    const int n_antennas {128};
-    const int n_pols {2};
-    const int n_channels {static_cast<int>(vis.nFrequencies)};
-    const int n_baselines {(n_antennas + 1) * (n_antennas / 2)};
-    const int matrix_size {n_baselines * n_pols * n_pols * 2};
-    const int n_intervals {static_cast<int>(vis.integration_intervals())};
+    const unsigned int n_antennas {vis.obsInfo.nAntennas};
+    const unsigned int n_pols {2};
+    const unsigned int n_channels {vis.nFrequencies};
+    const unsigned int n_baselines {((n_antennas + 1) * n_antennas) / 2};
+    const unsigned int matrix_size {n_baselines * n_pols * n_pols * 2};
+    const unsigned int n_intervals {static_cast<unsigned int>(vis.integration_intervals())};
 
     Visibilities final_vis {vis};
 
-    for(int interval {0}; interval < n_intervals; interval++){
+    for(unsigned int interval {0}; interval < n_intervals; interval++){
         float* new_vis {reinterpret_cast<float*>(final_vis.data()) + interval * matrix_size * n_channels};
         const float* curr_vis {reinterpret_cast<const float*>(vis.data()) + interval * matrix_size * n_channels};
-        for(int ch {0}; ch < n_channels; ch++){
-            for(int src_baseline {0}; src_baseline < n_baselines; src_baseline++){
-                int source_a1 {static_cast<int>(-0.5 + std::sqrt(0.25 + 2*src_baseline))};
-                int source_a2 {src_baseline - ((source_a1 + 1) * source_a1)/2};
-                for(int src_pol1 {0}; src_pol1 < 2; src_pol1++){
-                    for(int src_pol2 {0}; src_pol2 < 2; src_pol2++){
-                        int dest_a1, dest_p1, dest_a2, dest_p2;
+        for(unsigned int ch {0}; ch < n_channels; ch++){
+            for(unsigned int src_baseline {0}; src_baseline < n_baselines; src_baseline++){
+                unsigned int source_a1 {static_cast<unsigned int>(-0.5 + std::sqrt(0.25 + 2*src_baseline))};
+                unsigned int source_a2 {src_baseline - ((source_a1 + 1) * source_a1)/2};
+                for(unsigned int src_pol1 {0}; src_pol1 < 2; src_pol1++){
+                    for(unsigned int src_pol2 {0}; src_pol2 < 2; src_pol2++){
+                        unsigned int dest_a1, dest_p1, dest_a2, dest_p2;
 
-                        const int source1_idx {source_a1 * 2 + src_pol1};
-                        const int source2_idx {source_a2 * 2 + src_pol2};
-                        const int dest1_idx {mapping.data()[source1_idx]};
-                        const int dest2_idx {mapping.data()[source2_idx]};
+                        const unsigned int source1_idx {source_a1 * 2 + src_pol1};
+                        const unsigned int source2_idx {source_a2 * 2 + src_pol2};
+                        const unsigned int dest1_idx {static_cast<unsigned int>(mapping.data()[source1_idx])};
+                        const unsigned int dest2_idx {static_cast<unsigned int>(mapping.data()[source2_idx])};
 
                         dest_a1 = dest1_idx / 2;
                         dest_p1 = dest1_idx % 2;
@@ -91,9 +92,9 @@ Visibilities reorder_visibilities_cpu(const Visibilities& vis, const MemoryBuffe
                         
                         bool to_conjugate = !((source1_idx < source2_idx && dest1_idx < dest2_idx) || (source1_idx > source2_idx && dest1_idx > dest2_idx));
 
-                        const int src_idx { ch * matrix_size + src_baseline * 8 +  src_pol1 * 4 + src_pol2 * 2};
-                        int new_baseline;
-                        int new_idx;
+                        const unsigned int src_idx { ch * matrix_size + src_baseline * 8 +  src_pol1 * 4 + src_pol2 * 2};
+                        unsigned int new_baseline;
+                        unsigned int new_idx;
                         if(dest_a2 > dest_a1){
                             // we need to transpose polarisations
                             new_baseline =  get_baseline_from_antenna_pair(dest_a2, dest_a1);
