@@ -7,7 +7,7 @@ __global__ void apply_solutions_kernel(float* vis, ObservationInfo obsInfo, cons
 
     const unsigned int n_solfreq_per_band = sol_header.channel_count / 24u;
     const unsigned int solutions_offset = coarse_channel_index * n_solfreq_per_band;
-    const unsigned int n_baselines {(obsInfo.nAntennas + 1) * (obsInfo.nAntennas / 2)};
+    const unsigned int n_baselines {((obsInfo.nAntennas + 1) * obsInfo.nAntennas) / 2};
     const size_t matrix_size {n_baselines * obsInfo.nPolarizations * obsInfo.nPolarizations * 2};
     const unsigned int n_channels {gridDim.y};
     const size_t n_interval_values {matrix_size * n_channels};
@@ -31,6 +31,7 @@ __global__ void apply_solutions_kernel(float* vis, ObservationInfo obsInfo, cons
         unsigned int a2 {baseline - ((a1 + 1) * a1)/2};
         const JonesMatrix<double> &solA = sol[a1 * sol_header.channel_count + solChannel];
         const JonesMatrix<double> &solB = sol[a2 * sol_header.channel_count + solChannel];
+        if(solA.isnan() || solB.isnan()) continue;
         float *data {vis + interval * n_interval_values + matrix_size * ch + 8 * baseline};
         
         JonesMatrix<double> visData {JonesMatrix<double>::from_array<double, float>(data)};
