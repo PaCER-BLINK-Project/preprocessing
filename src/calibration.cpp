@@ -55,7 +55,7 @@ void apply_solutions_cpu(Visibilities &vis, const CalibrationSolutions& sol, uns
     else
         channelRatio =  vis.nFrequencies / n_solfreq_per_band;
 
-    const unsigned int n_baselines {(vis.obsInfo.nAntennas + 1) * (vis.obsInfo.nAntennas / 2)};
+    const unsigned int n_baselines {((vis.obsInfo.nAntennas + 1) * vis.obsInfo.nAntennas) / 2};
     const size_t matrix_size {n_baselines * vis.obsInfo.nPolarizations * vis.obsInfo.nPolarizations * 2};
     const size_t n_interval_values {matrix_size * vis.nFrequencies};
 
@@ -74,6 +74,7 @@ void apply_solutions_cpu(Visibilities &vis, const CalibrationSolutions& sol, uns
                 unsigned int a2 {baseline - ((a1 + 1) * a1)/2};
                 const JonesMatrix<double> &solA = sol.data()[a1 * sol.header.channel_count + solChannel];
                 const JonesMatrix<double> &solB = sol.data()[a2 * sol.header.channel_count + solChannel];
+                if(solA.isnan() || solB.isnan()) continue;
                 float *data {reinterpret_cast<float*>(vis.data()) + nInterval * n_interval_values + matrix_size * ch + 8 * baseline};
                 
                 JonesMatrix<double> visData {JonesMatrix<double>::from_array<double, float>(data)};
