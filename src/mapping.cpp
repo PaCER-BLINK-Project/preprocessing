@@ -31,7 +31,7 @@ std::vector<int> get_pfb_mapping(){
 MemoryBuffer<int> get_visibilities_mapping(const std::string& metafits_filename){
     auto metafits_mapping = read_metafits_mapping(metafits_filename);
     auto pfb_mapping = get_pfb_mapping();
-    MemoryBuffer<int> mb_mapping {256, false, false};
+    MemoryBuffer<int> mb_mapping {256};
     for(int idx {0}; idx < 256; idx++){
         int pfb_pos = pfb_mapping[idx];
         int final_pos = metafits_mapping[pfb_pos];

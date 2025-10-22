@@ -15,7 +15,7 @@ CalibrationSolutions CalibrationSolutions::from_file(const std::string& filename
         throw std::exception();
     }
     size_t n_solutions {header.interval_count * header.antenna_count * header.channel_count};
-    MemoryBuffer<JonesMatrix<double>> mb_sol {n_solutions, false,  false};
+    MemoryBuffer<JonesMatrix<double>> mb_sol {n_solutions};
     inp.read(reinterpret_cast<char*>(mb_sol.data()), sizeof(JonesMatrix<double>) * n_solutions);
     if(!inp){
         std::cerr << "read_solution: error while reading input stream." << std::endl;
