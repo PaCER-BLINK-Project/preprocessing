@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10.0)
 project(blink-preprocessing)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 include(CTest)
 
 option(USE_OPENMP "Compile with OpenMP enabled." ON)

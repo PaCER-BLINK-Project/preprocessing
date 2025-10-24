@@ -39,7 +39,7 @@ std::string data_root_dir;
 
 template <typename T>
 void read_fits_file(std::string filename, T*& buffer, size_t& length){
-    FITS my_fits {FITS::from_file(filename)};
+    FITS my_fits {filename, FITS::Mode::READ};
     auto hdu = my_fits[0];
     length = hdu.get_xdim() * hdu.get_ydim();
     T *tmp = new T[length];
