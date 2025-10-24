@@ -57,7 +57,7 @@ Visibilities vis_from_files(const std::string basepath, const std::string obs_id
     size_t length {0};
     const int nAntennas {128}, nPolarisations {4};
     const int nBaselines {(nAntennas / 2) * (nAntennas + 1)};
-    MemoryBuffer<std::complex<float>> mb_data (nBaselines * nPolarisations, false, false);
+    MemoryBuffer<std::complex<float>> mb_data (nBaselines * nPolarisations);
     float *data {reinterpret_cast<float*>(mb_data.data())};
     for(int cmplx {0}; cmplx < 2; cmplx++){
         for(int pol {0}; pol < nPolarisations; pol++){
